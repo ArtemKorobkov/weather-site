@@ -16,6 +16,7 @@
             color: #e0e0e0;
             overflow-x: hidden;
             line-height: 1.6;
+            width: 100%;
         }
         a { color: inherit; text-decoration: none; }
 
@@ -116,6 +117,33 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        .burger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            z-index: 1001;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+        .burger span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .burger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .burger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .burger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
         .nav-links { display: flex; gap: 35px; list-style: none; }
         .nav-links a {
             font-size: 0.95rem;
@@ -145,7 +173,7 @@
             padding: 120px 20px 80px;
             position: relative;
         }
-        .hero-content { max-width: 900px; }
+        .hero-content { max-width: 900px; word-wrap: break-word; }
         .hero-badge {
             display: inline-block;
             padding: 8px 20px;
@@ -333,6 +361,7 @@
         }
         .showcase-mockup {
             width: 100%;
+            max-width: 100%;
             border-radius: 20px;
             background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
             border: 1px solid rgba(255,255,255,0.1);
@@ -344,9 +373,15 @@
             position: relative;
             overflow: hidden;
         }
+        .showcase-mockup .fallback-icon {
+            position: absolute;
+            font-size: 5rem;
+            z-index: 1;
+        }
         .showcase-mockup img {
             width: 100%;
             height: 100%;
+            max-width: 100%;
             object-fit: cover;
             border-radius: 20px;
         }
@@ -466,6 +501,7 @@
         }
         .demo-widget {
             max-width: 550px;
+            width: 100%;
             margin: 0 auto;
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.08);
@@ -497,9 +533,11 @@
             display: flex;
             gap: 12px;
             margin-bottom: 30px;
+            width: 100%;
         }
         .demo-input {
             flex: 1;
+            min-width: 0;
             padding: 14px 20px;
             border-radius: 14px;
             border: 2px solid rgba(255,255,255,0.1);
@@ -722,8 +760,35 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 900px) {
-            .navbar { padding: 15px 25px; }
-            .nav-links { display: none; }
+            .navbar { padding: 15px 20px; }
+            .burger { display: flex; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                flex-direction: column;
+                background: rgba(10, 10, 26, 0.98);
+                backdrop-filter: blur(20px);
+                padding: 20px;
+                gap: 0;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+            .nav-links.open {
+                display: flex;
+            }
+            .nav-links li {
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+            .nav-links li:last-child {
+                border-bottom: none;
+            }
+            .nav-links a {
+                display: block;
+                padding: 15px 10px;
+                font-size: 1rem;
+            }
             .showcase { grid-template-columns: 1fr; gap: 40px; }
             .stats-row { grid-template-columns: repeat(2, 1fr); }
             .features-grid { grid-template-columns: 1fr; }
@@ -731,6 +796,45 @@
         @media (max-width: 600px) {
             .stats-row { grid-template-columns: 1fr; }
             .hero-buttons { flex-direction: column; align-items: center; }
+            .nav-logo { font-size: 1.2rem; }
+            .hero h1 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .btn { padding: 14px 28px; font-size: 0.9rem; width: 100%; max-width: 280px; justify-content: center; }
+            section { padding: 60px 15px; }
+            .section-title { font-size: 1.6rem; }
+            .section-subtitle { font-size: 0.95rem; }
+            .feature-card { padding: 25px 20px; }
+            .feature-icon { width: 45px; height: 45px; font-size: 1.4rem; }
+            .feature-card h3 { font-size: 1rem; }
+            .feature-card p { font-size: 0.85rem; }
+            .showcase-text h3 { font-size: 1.4rem; }
+            .showcase-text p { font-size: 0.9rem; }
+            .showcase-list li { font-size: 0.85rem; }
+            .demo-widget { padding: 30px 20px; max-width: 100%; }
+            .demo-widget h3 { font-size: 1.2rem; }
+            .demo-input { padding: 12px 15px; font-size: 0.9rem; }
+            .demo-btn { padding: 12px 20px; font-size: 0.9rem; }
+            .demo-temp-main { font-size: 2.8rem; }
+            .demo-city-name { font-size: 1.2rem; }
+            .demo-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .demo-stat { padding: 10px 12px; }
+            .demo-stat-value { font-size: 0.95rem; }
+            .demo-stat-label { font-size: 0.65rem; }
+            .tech-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .tech-card { padding: 20px 15px; }
+            .tech-card .tech-icon { font-size: 1.8rem; }
+            .tech-card h4 { font-size: 0.85rem; }
+            .tech-card p { font-size: 0.75rem; }
+            .stat-number { font-size: 1.8rem; }
+            .stat-label { font-size: 0.75rem; }
+            .stat-item { padding: 20px 15px; }
+            .cta-box { padding: 50px 20px; }
+            .cta-box h2 { font-size: 1.4rem; }
+            .cta-box p { font-size: 0.9rem; }
+            .cta-buttons { flex-direction: column; align-items: center; }
+            .footer { padding: 25px 15px; }
+            .footer p { font-size: 0.8rem; }
+            .container { padding: 0 5px; }
         }
     </style>
 </head>
@@ -748,7 +852,12 @@
 <!-- ===== NAVBAR ===== -->
 <nav class="navbar" id="navbar">
     <div class="nav-logo">🌤️ Погода от Артёма</div>
-    <ul class="nav-links">
+    <button class="burger" id="burger" aria-label="Меню">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <ul class="nav-links" id="navLinks">
         <li><a href="#features">Возможности</a></li>
         <li><a href="#desktop">Приложение</a></li>
         <li><a href="#telegram">Telegram-бот</a></li>
@@ -826,7 +935,7 @@
         <div class="showcase">
             <div class="showcase-visual reveal">
                 <div class="showcase-mockup">
-                    <img src="image/programm.png" alt="Десктопное приложение">
+                    <img src="image/programm.png" alt="Десктопное приложение" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback-icon')?.remove(); this.parentElement.innerHTML += '<div class=\'fallback-icon\' style=\'position:absolute;font-size:5rem;z-index:1;\'>🖥️</div>'">
                 </div>
             </div>
             <div class="showcase-text reveal">
@@ -857,7 +966,7 @@
         <div class="showcase" style="direction: rtl;">
             <div class="showcase-visual reveal" style="direction: ltr;">
                 <div class="showcase-mockup">
-                    <img src="image/telegram.png" alt="Telegram-бот">
+                    <img src="image/telegram.png" alt="Telegram-бот" onerror="this.style.display='none'; this.parentElement.querySelector('.fallback-icon')?.remove(); this.parentElement.innerHTML += '<div class=\'fallback-icon\' style=\'position:absolute;font-size:5rem;z-index:1;\'>🤖</div>'">
                 </div>
             </div>
             <div class="showcase-text reveal" style="direction: ltr;">
@@ -1019,6 +1128,26 @@
     window.addEventListener('scroll', function() {
         document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
     });
+
+    // ===== BURGER MENU =====
+    var burger = document.getElementById('burger');
+    var navLinks = document.getElementById('navLinks');
+    
+    if (burger) {
+        burger.addEventListener('click', function() {
+            burger.classList.toggle('active');
+            navLinks.classList.toggle('open');
+        });
+        
+        // Закрытие меню при клике на ссылку
+        var links = navLinks.querySelectorAll('a');
+        links.forEach(function(link) {
+            link.addEventListener('click', function() {
+                burger.classList.remove('active');
+                navLinks.classList.remove('open');
+            });
+        });
+    }
 
     // ===== SCROLL REVEAL =====
     var observer = new IntersectionObserver(function(entries) {
