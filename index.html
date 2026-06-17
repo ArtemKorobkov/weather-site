@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погода от Артёма — Десктопное приложение и Telegram-бот</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a1a;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .bg-animation .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        .bg-animation .orb:nth-child(1) {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, #667eea, transparent);
+            top: -10%; left: -10%;
+            animation-duration: 25s;
+        }
+        .bg-animation .orb:nth-child(2) {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, #764ba2, transparent);
+            top: 40%; right: -10%;
+            animation-duration: 30s;
+            animation-delay: -5s;
+        }
+        .bg-animation .orb:nth-child(3) {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, #4facfe, transparent);
+            bottom: -5%; left: 30%;
+            animation-duration: 22s;
+            animation-delay: -10s;
+        }
+        .bg-animation .orb:nth-child(4) {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, #00f2fe, transparent);
+            top: 20%; left: 50%;
+            animation-duration: 28s;
+            animation-delay: -15s;
+        }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(80px, -60px) scale(1.1); }
+            50% { transform: translate(-40px, 80px) scale(0.9); }
+            75% { transform: translate(60px, 40px) scale(1.05); }
+        }
+
+        /* ===== PARTICLES ===== */
+        .particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: particleFloat linear infinite;
+        }
+        @keyframes particleFloat {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 20px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 26, 0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+        .navbar.scrolled {
+            padding: 12px 60px;
+            background: rgba(10, 10, 26, 0.95);
+        }
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nav-links { display: flex; gap: 35px; list-style: none; }
+        .nav-links a {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+            transition: color 0.3s;
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 0;
+            width: 0; height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+        .nav-links a:hover { color: #fff; }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* ===== HERO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            position: relative;
+        }
+        .hero-content { max-width: 900px; }
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease;
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 25px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, #667eea, #764ba2, #4facfe, #00f2fe);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 5s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: rgba(255,255,255,0.6);
+            max-width: 650px;
+            margin: 0 auto 40px;
+            animation: fadeInUp 0.8s ease 0.4s both;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+            transform: translateY(-3px);
+        }
+
+        /* ===== SECTIONS ===== */
+        section {
+            padding: 100px 20px;
+            position: relative;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-label {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 50px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.5);
+            max-width: 600px;
+            margin-bottom: 60px;
+        }
+
+        /* ===== FEATURES GRID ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 24px;
+            padding: 40px 35px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, #764ba2, transparent);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .feature-card:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(102, 126, 234, 0.2);
+            transform: translateY(-5px);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon {
+            width: 60px; height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .feature-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+        .feature-card p {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* ===== SHOWCASE ===== */
+        .showcase {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .showcase-visual {
+            position: relative;
+        }
+        .showcase-mockup {
+            width: 100%;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
+            border: 1px solid rgba(255,255,255,0.1);
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .showcase-mockup img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+        .showcase-mockup::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1), transparent, rgba(118,75,162,0.1));
+            animation: mockupPulse 4s ease-in-out infinite;
+        }
+        @keyframes mockupPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .showcase-text h3 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .showcase-text p {
+            color: rgba(255,255,255,0.5);
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        .showcase-list {
+            list-style: none;
+        }
+        .showcase-list li {
+            padding: 10px 0;
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .showcase-list li::before {
+            content: '✓';
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* ===== TECH STACK ===== */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .tech-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .tech-card:hover {
+            background: rgba(255,255,255,0.06);
+            transform: translateY(-3px);
+        }
+        .tech-card .tech-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        .tech-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        .tech-card p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* ===== STATS ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-top: 60px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 8px;
+        }
+
+        /* ===== DEMO WIDGET ===== */
+        .demo-section {
+            text-align: center;
+            padding: 100px 20px;
+        }
+        .demo-widget {
+            max-width: 550px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 28px;
+            padding: 45px 40px;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+        .demo-widget::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #4facfe);
+        }
+        .demo-widget h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .demo-widget .demo-hint {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 30px;
+        }
+        .demo-input-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        .demo-input {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 14px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .demo-input:focus {
+            border-color: #667eea;
+        }
+        .demo-input::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+        .demo-btn {
+            padding: 14px 28px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+        .demo-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .demo-loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0;
+        }
+        .demo-loading.active {
+            display: flex;
+        }
+        .demo-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(102,126,234,0.2);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .demo-loading p {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.95rem;
+        }
+        .demo-result {
+            display: none;
+            margin-top: 10px;
+        }
+        .demo-result.active {
+            display: block;
+            animation: resultFadeIn 0.5s ease;
+        }
+        @keyframes resultFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .demo-city-name {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .demo-temp-main {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+        .demo-temp-feels {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 25px;
+        }
+        .demo-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .demo-stat {
+            background: rgba(255,255,255,0.04);
+            border-radius: 14px;
+            padding: 14px 16px;
+            text-align: center;
+        }
+        .demo-stat-icon {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+        .demo-stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .demo-stat-label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 2px;
+        }
+        .demo-description {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+        }
+        .demo-tip {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.35);
+            text-align: center;
+            font-style: italic;
+            padding: 12px;
+            background: rgba(102,126,234,0.08);
+            border-radius: 10px;
+        }
+        .demo-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            background: rgba(102,126,234,0.12);
+            color: #667eea;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            text-align: center;
+            padding: 120px 20px;
+        }
+        .cta-box {
+            background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+            border: 1px solid rgba(102,126,234,0.2);
+            border-radius: 32px;
+            padding: 80px 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(102,126,234,0.1), transparent 50%);
+            animation: ctaGlow 8s ease-in-out infinite;
+        }
+        @keyframes ctaGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(5%, 5%); }
+        }
+        .cta-box h2 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .cta-box p {
+            color: rgba(255,255,255,0.5);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            padding: 40px 20px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .footer p {
+            color: rgba(255,255,255,0.3);
+            font-size: 0.9rem;
+        }
+
+        /* ===== SCROLL ANIMATIONS ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .navbar { padding: 15px 25px; }
+            .nav-links { display: none; }
+            .showcase { grid-template-columns: 1fr; gap: 40px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .features-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== ANIMATED BACKGROUND ===== -->
+<div class="bg-animation">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+</div>
+<div class="particles" id="particles"></div>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+    <div class="nav-logo">🌤️ Погода от Артёма</div>
+    <ul class="nav-links">
+        <li><a href="#features">Возможности</a></li>
+        <li><a href="#desktop">Приложение</a></li>
+        <li><a href="#telegram">Telegram-бот</a></li>
+        <li><a href="#tech">Технологии</a></li>
+        <li><a href="#download">Скачать</a></li>
+    </ul>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">🚀 Python • Flet • Telegram Bot</div>
+        <h1>
+            <span class="gradient-text">Погода от Артёма</span><br>
+            <span style="font-size: 0.6em; color: rgba(255,255,255,0.6);">Десктопное приложение + Telegram-бот</span>
+        </h1>
+        <p>
+            Современное приложение для мониторинга погоды в любом городе мира.
+            Текущая погода, прогноз на 5 дней, конвертер температур,
+            оценка комфортности и Telegram-бот — всё в одном проекте.
+        </p>
+        <div class="hero-buttons">
+            <a href="#download" class="btn btn-primary">⬇️ Скачать приложение</a>
+            <a href="https://web.telegram.org/#/im?@ArtemWeatherrBot" target="_blank" class="btn btn-secondary">🤖 Открыть Telegram-бот</a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section id="features">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">Возможности</span>
+            <h2 class="section-title">Всё, что нужно для погоды</h2>
+            <p class="section-subtitle">Полный набор функций для мониторинга и анализа погодных условий</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon">🌡️</div>
+                <h3>Текущая погода</h3>
+                <p>Температура, ощущаемая температура, влажность, скорость ветра, давление, видимость, восход и закат — данные из OpenWeatherMap API в реальном времени.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">📅</div>
+                <h3>Прогноз на 5 дней</h3>
+                <p>Детальный прогноз с шагом 3 часа (до 40 записей). Текстовый график изменения температур. Сохранение прогнозов в текстовые файлы.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">🧮</div>
+                <h3>Погодный калькулятор</h3>
+                <p>Конвертация температур: Цельсий → Фаренгейт → Кельвин. Расчёт комфортности с учётом температуры, ветра и влажности. Индекс ветро-холода и индекс жары.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">📍</div>
+                <h3>Геолокация по IP</h3>
+                <p>Автоматическое определение вашего местоположения по IP-адресу. Мгновенная подстановка города для получения погоды без ручного ввода.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">💾</div>
+                <h3>Кэширование и история</h3>
+                <p>SQLite база данных: кэширование погоды на 10 минут, прогноза на 30 минут. История всех запросов с временем. Настройки сохраняются между запусками.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">🎨</div>
+                <h3>Тёмная и светлая тема</h3>
+                <p>Современный градиентный интерфейс с glassmorphism-эффектами. Переключение тем с сохранением настроек в базу данных. Плавные анимации.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== DESKTOP APP ===== -->
+<section id="desktop">
+    <div class="container">
+        <div class="showcase">
+            <div class="showcase-visual reveal">
+                <div class="showcase-mockup">
+                    <img src="image/programm.png" alt="Десктопное приложение">
+                </div>
+            </div>
+            <div class="showcase-text reveal">
+                <span class="section-label">Десктопное приложение</span>
+                <h3>Мощный GUI на Flet</h3>
+                <p>
+                    Кроссплатформенное приложение с современным интерфейсом,
+                    построенное на Python и фреймворке Flet. Работает на Windows,
+                    macOS и Linux.
+                </p>
+                <ul class="showcase-list">
+                    <li>Живые часы и дата с автообновлением</li>
+                    <li>Интерактивные карточки погоды</li>
+                    <li>Текстовый график температур</li>
+                    <li>История запросов с очисткой</li>
+                    <li>Сохранение прогнозов в файлы</li>
+                    <li>Случайные советы о погоде</li>
+                    <li>Обработка всех ошибок без вылетов</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TELEGRAM BOT ===== -->
+<section id="telegram">
+    <div class="container">
+        <div class="showcase" style="direction: rtl;">
+            <div class="showcase-visual reveal" style="direction: ltr;">
+                <div class="showcase-mockup">
+                    <img src="image/telegram.png" alt="Telegram-бот">
+                </div>
+            </div>
+            <div class="showcase-text reveal" style="direction: ltr;">
+                <span class="section-label">Telegram-бот</span>
+                <h3>Погода в кармане 24/7</h3>
+                <p>
+                    Полноценный Telegram-бот на aiogram 3.x, развёрнутый на Railway.
+                    Доступен всем пользователям — узнавайте погоду без установки приложений.
+                </p>
+                <ul class="showcase-list">
+                    <li>Команды: /weather, /forecast, /convert, /comfort</li>
+                    <li>Сравнение погоды двух городов</li>
+                    <li>Погода по геолокации (GPS)</li>
+                    <li>Случайные факты о погоде (/fact)</li>
+                    <li>Погодный гороскоп (/horoscope)</li>
+                    <li>Rate limiting для защиты от спама</li>
+                    <li>Inline-кнопки для быстрого доступа</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== DEMO ===== -->
+<section class="demo-section" id="demo">
+    <div class="container">
+        <div class="reveal">
+            <span class="section-label">Попробуй прямо сейчас</span>
+            <h2 class="section-title">Живой демо-запрос</h2>
+            <p class="section-subtitle" style="margin: 0 auto 50px;">Введите любой город и нажмите «Показать погоду» — увидите результат без скачивания</p>
+        </div>
+        <div class="demo-widget reveal">
+            <div class="demo-badge">Демо-режим</div>
+            <h3>🌡️ Узнать погоду</h3>
+            <p class="demo-hint">Введите название города на английском</p>
+            <div class="demo-input-row">
+                <input type="text" class="demo-input" id="demoCity" placeholder="Moscow, London, Tokyo..." autocomplete="off">
+                <button class="demo-btn" id="demoBtn" onclick="demoWeather()">Показать</button>
+            </div>
+            <div class="demo-loading" id="demoLoading">
+                <div class="demo-spinner"></div>
+                <p>Получаем данные...</p>
+            </div>
+            <div class="demo-result" id="demoResult"></div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section>
+    <div class="container">
+        <div class="stats-row reveal">
+            <div class="stat-item">
+                <div class="stat-number">10+</div>
+                <div class="stat-label">Ключевых функций</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Telegram-бот на Railway</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Таблицы в SQLite</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Платформы: Windows, macOS, Linux</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TECH STACK ===== -->
+<section id="tech">
+    <div class="container">
+        <div class="reveal" style="text-align: center;">
+            <span class="section-label">Технологии</span>
+            <h2 class="section-title">Стек разработки</h2>
+            <p class="section-subtitle" style="margin: 0 auto 60px;">Современные инструменты для создания надёжного приложения</p>
+        </div>
+        <div class="tech-grid reveal">
+            <div class="tech-card">
+                <div class="tech-icon">🐍</div>
+                <h4>Python 3.13</h4>
+                <p>Язык программирования</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🎨</div>
+                <h4>Flet</h4>
+                <p>GUI-фреймворк</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🤖</div>
+                <h4>aiogram 3.x</h4>
+                <p>Telegram-бот</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🌤️</div>
+                <h4>OpenWeatherMap</h4>
+                <p>API погоды</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">💾</div>
+                <h4>SQLite</h4>
+                <p>База данных</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🌐</div>
+                <h4>Railway</h4>
+                <p>Хостинг бота</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== DOWNLOAD ===== -->
+<section id="download" class="cta-section">
+    <div class="container">
+        <div class="cta-box reveal">
+            <h2>🚀 Готовы попробовать?</h2>
+            <p>Скачайте десктопное приложение или откройте Telegram-бот — и узнайте погоду прямо сейчас!</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/ArtemKorobkov/PogodaProject" target="_blank" class="btn btn-primary">
+                    ⬇️ Скачать с GitHub
+                </a>
+                <a href="https://github.com/ArtemKorobkov/PogodaProject/archive/refs/heads/main.zip" target="_blank" class="btn btn-secondary">
+                    📦 ZIP-архив
+                </a>
+                <a href="https://web.telegram.org/#/im?@ArtemWeatherrBot" target="_blank" class="btn btn-secondary">
+                    🤖 Telegram-бот
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+    <p>© 2026 Погода от Артёма — Коробков Артём Юрьевич. Все права защищены.</p>
+</footer>
+
+<!-- ===== SCRIPTS ===== -->
+<script>
+    // ===== PARTICLES =====
+    (function() {
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 40; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (8 + Math.random() * 15) + 's';
+            p.style.animationDelay = -(Math.random() * 20) + 's';
+            p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+            container.appendChild(p);
+        }
+    })();
+
+    // ===== NAVBAR SCROLL =====
+    window.addEventListener('scroll', function() {
+        document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // ===== SCROLL REVEAL =====
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+    // ===== DEMO WEATHER =====
+    var demoData = {
+        'moscow': {
+            city: 'Москва',
+            temp: 15,
+            feels: 12,
+            humidity: 65,
+            wind: 3.5,
+            pressure: 1013,
+            visibility: 10,
+            description: 'Небольшая облачность',
+            tip: '☂️ Если дождь — не забудь зонт!'
+        },
+        'london': {
+            city: 'Лондон',
+            temp: 12,
+            feels: 9,
+            humidity: 78,
+            wind: 5.1,
+            pressure: 1008,
+            visibility: 7,
+            description: 'Дождь',
+            tip: '🧥 В ветреную погоду куртка с капюшоном — твой друг.'
+        },
+        'tokyo': {
+            city: 'Токио',
+            temp: 22,
+            feels: 24,
+            humidity: 70,
+            wind: 2.3,
+            pressure: 1015,
+            visibility: 12,
+            description: 'Ясно',
+            tip: '☀️ Солнцезащитные очки полезны даже при ярком небе.'
+        },
+        'new york': {
+            city: 'Нью-Йорк',
+            temp: 19,
+            feels: 17,
+            humidity: 55,
+            wind: 4.8,
+            pressure: 1010,
+            visibility: 15,
+            description: 'Переменная облачность',
+            tip: '💧 В жаркую погоду пей больше воды.'
+        },
+        'kazan': {
+            city: 'Казань',
+            temp: 14,
+            feels: 11,
+            humidity: 60,
+            wind: 3.2,
+            pressure: 1012,
+            visibility: 11,
+            description: 'Ясно',
+            tip: '🌤️ В пасмурную погоду не забудь о хорошей освещённости.'
+        },
+        'orenburg': {
+            city: 'Оренбург',
+            temp: 13,
+            feels: 9,
+            humidity: 50,
+            wind: 4.5,
+            pressure: 1011,
+            visibility: 13,
+            description: 'Небольшая облачность',
+            tip: '🌬️ Перед сильным ветром проверьте прочность ветвей деревьев.'
+        },
+        'sochi': {
+            city: 'Сочи',
+            temp: 26,
+            feels: 27,
+            humidity: 72,
+            wind: 2.1,
+            pressure: 1014,
+            visibility: 14,
+            description: 'Ясно',
+            tip: '🧴 При высокой температуре используй крем от загара.'
+        },
+        'mumbai': {
+            city: 'Мумбаи',
+            temp: 31,
+            feels: 36,
+            humidity: 85,
+            wind: 1.8,
+            pressure: 1006,
+            visibility: 6,
+            description: 'Морось',
+            tip: '💧 В жаркую погоду пей больше воды.'
+        }
+    };
+
+    function demoWeather() {
+        var input = document.getElementById('demoCity');
+        var btn = document.getElementById('demoBtn');
+        var loading = document.getElementById('demoLoading');
+        var resultDiv = document.getElementById('demoResult');
+        var cityRaw = input.value.trim();
+
+        if (cityRaw === '') {
+            input.style.borderColor = '#e74c3c';
+            setTimeout(function() { input.style.borderColor = 'rgba(255,255,255,0.1)'; }, 1500);
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = '⏳';
+        resultDiv.className = 'demo-result';
+        loading.style.display = 'flex';
+
+        setTimeout(function() {
+            loading.style.display = 'none';
+
+            var cityLower = cityRaw.toLowerCase();
+            var data = null;
+
+            for (var key in demoData) {
+                if (cityLower.indexOf(key) !== -1 || key.indexOf(cityLower) !== -1) {
+                    data = demoData[key];
+                    break;
+                }
+            }
+
+            if (!data) {
+                var seed = 0;
+                for (var i = 0; i < cityLower.length; i++) {
+                    seed += cityLower.charCodeAt(i);
+                }
+                var temps = [5, 10, 14, 18, 22, 25, 28, 32, -2, 7, 16, 20, 24, 30, -5, 12];
+                var humids = [40, 50, 55, 60, 65, 70, 75, 80, 85, 45, 55, 60];
+                var winds = [1.0, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 1.5];
+                var descs = ['Ясно', 'Небольшая облачность', 'Переменная облачность', 'Пасмурно', 'Облачно', 'Небольшой дождь', 'Дождь'];
+                var tips = [
+                    '☂️ Если дождь — не забудь зонт!',
+                    '🧴 При высокой температуре используй крем от загара.',
+                    '🧥 В ветреную погоду куртка с капюшоном — твой друг.',
+                    '💧 В жаркую погоду пей больше воды.',
+                    '❄️ В сильный мороз лучше носить несколько слоёв одежды.',
+                    '🌡️ Следи за прогнозом и планий мероприятия в хорошую погоду.'
+                ];
+                data = {
+                    city: cityRaw.charAt(0).toUpperCase() + cityRaw.slice(1),
+                    temp: temps[seed % temps.length],
+                    feels: temps[seed % temps.length] - 2 - (seed % 3),
+                    humidity: humids[seed % humids.length],
+                    wind: winds[seed % winds.length],
+                    pressure: 1000 + (seed % 30),
+                    visibility: 5 + (seed % 12),
+                    description: descs[seed % descs.length],
+                    tip: tips[seed % tips.length]
+                };
+            }
+
+            var tempColor;
+            if (data.temp < 10) tempColor = '#74b9ff';
+            else if (data.temp < 25) tempColor = '#fdcb6e';
+            else tempColor = '#e17055';
+
+            var weatherEmoji;
+            if (data.temp < 0) weatherEmoji = '❄️';
+            else if (data.temp < 10) weatherEmoji = '🌤️';
+            else if (data.temp < 20) weatherEmoji = '⛅';
+            else weatherEmoji = '☀️';
+
+            var html = '';
+            html += '<div class="demo-badge">Данные получены</div>';
+            html += '<div class="demo-city-name">' + weatherEmoji + ' ' + data.city + '</div>';
+            html += '<div class="demo-temp-main" style="background: linear-gradient(135deg, ' + tempColor + ', #fff); -webkit-background-clip: text; background-clip: text;">' + data.temp + '\u00B0C</div>';
+            html += '<div class="demo-temp-feels">Ощущается как ' + data.feels + '\u00B0C</div>';
+            html += '<div class="demo-description">' + data.description + '</div>';
+            html += '<div class="demo-stats">';
+            html += '<div class="demo-stat"><div class="demo-stat-icon">💧</div><div class="demo-stat-value">' + data.humidity + '%</div><div class="demo-stat-label">Влажность</div></div>';
+            html += '<div class="demo-stat"><div class="demo-stat-icon">💨</div><div class="demo-stat-value">' + data.wind + ' м/с</div><div class="demo-stat-label">Ветер</div></div>';
+            html += '<div class="demo-stat"><div class="demo-stat-icon">📊</div><div class="demo-stat-value">' + data.pressure + ' гПа</div><div class="demo-stat-label">Давление</div></div>';
+            html += '<div class="demo-stat"><div class="demo-stat-icon">👁️</div><div class="demo-stat-value">' + data.visibility + ' км</div><div class="demo-stat-label">Видимость</div></div>';
+            html += '</div>';
+            html += '<div class="demo-tip">' + data.tip + '</div>';
+
+            resultDiv.innerHTML = html;
+            resultDiv.className = 'demo-result active';
+
+            btn.disabled = false;
+            btn.textContent = 'Показать';
+        }, 1500);
+    }
+
+    // Enter key support
+    document.getElementById('demoCity').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') demoWeather();
+    });
+</script>
+
+</body>
+</html>
